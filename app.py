@@ -26,7 +26,7 @@ async def ask_ai(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"}
     data = {
-        "model": "google/gemma-2-9b-it:free",
+        "model": "mistralai/mistral-7b-instruct:free",
         "messages": [{"role": "user", "content": prompt}]
     }
     async with aiohttp.ClientSession() as session:
