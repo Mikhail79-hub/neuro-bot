@@ -21,15 +21,25 @@ tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
 async def ask_ai(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}"}
+    headers = {
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Content-Type": "application/json"
+    }
     data = {
         "model": "mistralai/mistral-7b-instruct:free",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [
+            {"role": "system", "content": "Ты - Нейро-Инженер. Пиши захватывающие посты для инженеров на русском языке с эмодзи."},
+            {"role": "user", "content": prompt}
+        ]
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=data) as resp:
             res = await resp.json()
-            return res['choices'][0]['message']['content'] if 'choices' in res else "Ошибка"
+            if 'choices' in res and len(res['choices']) > 0:
+                return res['choices'][0]['message']['content']
+            else:
+                print(f"Ошибка API: {res}")
+                return "Извините, нейросеть сейчас занята, попробуйте через минуту."
 
 async def generate_post():
     try:
