@@ -43,27 +43,43 @@ async def ask_ai(prompt):
 # 2. Функция "Зрение" (Бесплатная генерация картинок)
 def get_image_url(prompt_en):
     seed = random.randint(1, 999999)
-    clean_prompt = prompt_en.replace(" ", "%20")
+    # Очищаем промпт от спецсимволов и лишних пробелов
+    clean_prompt = "".join(c for c in prompt_en if c.isalnum() or c.isspace())
+    clean_prompt = clean_prompt.replace(" ", ",")
     return f"https://image.pollinations.ai/prompt/{clean_prompt}?seed={seed}&width=1024&height=1024&nologo=true"
 
 # 3. Главная магия: Генерация и публикация поста
 async def generate_post():
-    print("Ищу новости...")
-    search = tavily.search(query="инновации в электронике ИИ физика новости 2025", search_depth="basic")
-    news_content = search['results'][0]['content']
-    
-    print("Пишу текст поста...")
-    post_text = await ask_ai(f"Напиши захватывающий пост на основе этой новости: {news_content}. В конце добавь вопрос к аудитории.")
-    
-    print("Создаю промпт для картинки...")
-    img_prompt_raw = await ask_ai(f"Напиши короткий промпт для нейросети на английском языке (ТОЛЬКО промпт!), чтобы нарисовать футуристическую иллюстрацию к этой теме: {news_content}")
-    img_prompt_en = img_prompt_raw.split('\n')[0].strip()
-    
-    photo_url = get_image_url(img_prompt_en)
-    
-    print("Публикую в канал...")
-    await bot.send_photo(chat_id=CHANNEL_ID, photo=photo_url, caption=post_text[:1024], parse_mode="Markdown")
-
+    print("--- НАЧИНАЮ ГЕНЕРАЦИЮ ---")
+    try:
+        print("Ищу новости...")
+        # Используем английский запрос для более свежих данных
+        search = tavily.search(query="latest electronics AI physics news 2025", search_depth="basic")
+        news_content = search['results'][0]['content']
+        
+        print("Пишу текст...")
+        post_text = await ask_ai(f"Напиши захватывающий пост на основе этой новости: {news_content}. Пиши на русском языке в стиле радиофизика, используй эмодзи.")
+        
+        print("Создаю промпт...")
+        img_prompt_raw = await ask_ai(f"Write a very short English prompt for AI generator about this topic: {news_content}. Only 1 sentence, ONLY English text.")
+        img_prompt_en = img_prompt_raw.split('\n')[0].strip()
+        
+        photo_url = get_image_url(img_prompt_en)
+        print(f"Ссылка на фото: {photo_url}")
+        
+        print("Отправляю в Телеграм...")
+        try:
+            # Пытаемся отправить с фото
+            await bot.send_photo(chat_id=CHANNEL_ID, photo=photo_url, caption=post_text[:1024], parse_mode="Markdown")
+        except Exception as e:
+            print(f"Ошибка фото: {e}, отправляю только текст")
+            # Если фото не прошло, отправляем просто текст в канал
+            await bot.send_message(chat_id=CHANNEL_ID, text=post_text[:4000])
+            
+    except Exception as e:
+        print(f"КРИТИЧЕСКАЯ ОШИБКА: {e}")
+        raise e
+        
 # Команда /post для ручного запуска
 @dp.message_handler(commands=['post'])
 async def manual_post(message: types.Message):
