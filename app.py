@@ -28,7 +28,7 @@ async def ask_ai(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {"Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}", "Content-Type": "application/json"}
     data = {
-        "model": "mistralai/mistral-7b-instruct:free", # Вернулись к Мистралю
+        "model": "openchat/openchat-7b:free", # Вернулись к Мистралю
         "messages": [
             {"role": "system", "content": "Ты - ведущий инженер нейросетей. Пиши кратко, технично, с эмодзи на русском."},
             {"role": "user", "content": prompt}
